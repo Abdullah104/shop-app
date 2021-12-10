@@ -9,7 +9,7 @@ class Products with ChangeNotifier {
     'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products.json',
   );
 
-  final _items = <Product>[];
+  var _items = <Product>[];
 
   List<Product> get items => [..._items];
 
@@ -21,12 +21,13 @@ class Products with ChangeNotifier {
       final response = await get(_uri);
       final body = json.decode(response.body) as Map<String, dynamic>;
       final keys = body.keys.toList();
+      final tmp = <Product>[];
 
       for (var i = 0; i < keys.length; i++) {
         final key = keys[i];
         final value = body[key];
 
-        _items.add(
+        tmp.add(
           Product(
             id: key,
             title: value['title'],
@@ -37,7 +38,7 @@ class Products with ChangeNotifier {
         );
       }
 
-      // _items = products;
+      _items = tmp;
     } finally {
       notifyListeners();
     }
