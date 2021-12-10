@@ -25,6 +25,7 @@ class _EditProductRouteState extends State<EditProductRoute> {
   var _isInit = true;
   late final Map<String, dynamic> _initValues;
   late final RoutePurpose purpose;
+  var _isLoading = false;
 
   @override
   void initState() {
@@ -80,150 +81,38 @@ class _EditProductRouteState extends State<EditProductRoute> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextFormField(
-                  initialValue: _initValues['title'],
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                  ),
-                  textInputAction: TextInputAction.next,
-                  onSaved: (title) => product = Product(
-                    id: product.id,
-                    title: title!,
-                    description: product.description,
-                    price: product.price,
-                    imageUrl: product.imageUrl,
-                    isFavorite: product.isFavorite,
-                  ),
-                  validator: (title) {
-                    String? errorMessage;
-
-                    if (title == null) {
-                      errorMessage = 'Please provide a value';
-                    } else {
-                      if (title.isEmpty) {
-                        errorMessage = 'Please provide a value';
-                      }
-                    }
-
-                    return errorMessage;
-                  },
-                ),
-                TextFormField(
-                  initialValue: _initValues['price'].toString(),
-                  decoration: const InputDecoration(
-                    labelText: 'Price',
-                  ),
-                  textInputAction: TextInputAction.next,
-                  keyboardType: TextInputType.number,
-                  onSaved: (price) => product = Product(
-                    id: product.id,
-                    title: product.title,
-                    description: product.description,
-                    price: double.parse(price!),
-                    imageUrl: product.imageUrl,
-                    isFavorite: product.isFavorite,
-                  ),
-                  validator: (price) {
-                    String? errorMessage;
-
-                    if (price == null) {
-                      errorMessage = 'Please provide a value';
-                    } else {
-                      if (price.isEmpty) {
-                        errorMessage = 'Please provide a value';
-                      }
-                      final value = double.tryParse(price);
-
-                      if (value == null) {
-                        errorMessage = 'Price not correct';
-                      } else if (value < 0) {
-                        errorMessage = 'Price not correct';
-                      }
-                    }
-
-                    return errorMessage;
-                  },
-                ),
-                TextFormField(
-                  initialValue: _initValues['description'],
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                  ),
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 3,
-                  onSaved: (description) => product = Product(
-                    id: product.id,
-                    title: product.title,
-                    description: description!,
-                    price: product.price,
-                    imageUrl: product.imageUrl,
-                    isFavorite: product.isFavorite,
-                  ),
-                  validator: (description) {
-                    String? errorMessage;
-
-                    if (description == null) {
-                      errorMessage = 'Please provide a value';
-                    } else {
-                      if (description.isEmpty) {
-                        errorMessage = 'Please provide a value';
-                      }
-                    }
-
-                    return errorMessage;
-                  },
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      height: 100,
-                      width: 100,
-                      margin: const EdgeInsets.only(top: 8, right: 10),
-                      child: _controller.text.isEmpty
-                          ? const Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Text('Enter a URL'),
-                            )
-                          : FittedBox(
-                              child: Image.network(
-                                _controller.text,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                    ),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _initValues['image_url'],
-                        focusNode: _imageUrlFocusNode,
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator.adaptive(),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        initialValue: _initValues['title'],
                         decoration: const InputDecoration(
-                          labelText: 'Image URL',
+                          labelText: 'Title',
                         ),
-                        keyboardType: TextInputType.url,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _saveForm,
-                        onSaved: (imageUrl) => product = Product(
+                        textInputAction: TextInputAction.next,
+                        onSaved: (title) => product = Product(
                           id: product.id,
-                          title: product.title,
+                          title: title!,
                           description: product.description,
                           price: product.price,
-                          imageUrl: imageUrl!,
+                          imageUrl: product.imageUrl,
                           isFavorite: product.isFavorite,
                         ),
-                        validator: (imageUrl) {
+                        validator: (title) {
                           String? errorMessage;
 
-                          if (imageUrl == null) {
+                          if (title == null) {
                             errorMessage = 'Please provide a value';
                           } else {
-                            if (imageUrl.isEmpty) {
+                            if (title.isEmpty) {
                               errorMessage = 'Please provide a value';
                             }
                           }
@@ -231,14 +120,132 @@ class _EditProductRouteState extends State<EditProductRoute> {
                           return errorMessage;
                         },
                       ),
-                    ),
-                  ],
+                      TextFormField(
+                        initialValue: _initValues['price'].toString(),
+                        decoration: const InputDecoration(
+                          labelText: 'Price',
+                        ),
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.number,
+                        onSaved: (price) => product = Product(
+                          id: product.id,
+                          title: product.title,
+                          description: product.description,
+                          price: double.parse(price!),
+                          imageUrl: product.imageUrl,
+                          isFavorite: product.isFavorite,
+                        ),
+                        validator: (price) {
+                          String? errorMessage;
+
+                          if (price == null) {
+                            errorMessage = 'Please provide a value';
+                          } else {
+                            if (price.isEmpty) {
+                              errorMessage = 'Please provide a value';
+                            }
+                            final value = double.tryParse(price);
+
+                            if (value == null) {
+                              errorMessage = 'Price not correct';
+                            } else if (value < 0) {
+                              errorMessage = 'Price not correct';
+                            }
+                          }
+
+                          return errorMessage;
+                        },
+                      ),
+                      TextFormField(
+                        initialValue: _initValues['description'],
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                        ),
+                        keyboardType: TextInputType.multiline,
+                        maxLines: 3,
+                        onSaved: (description) => product = Product(
+                          id: product.id,
+                          title: product.title,
+                          description: description!,
+                          price: product.price,
+                          imageUrl: product.imageUrl,
+                          isFavorite: product.isFavorite,
+                        ),
+                        validator: (description) {
+                          String? errorMessage;
+
+                          if (description == null) {
+                            errorMessage = 'Please provide a value';
+                          } else {
+                            if (description.isEmpty) {
+                              errorMessage = 'Please provide a value';
+                            }
+                          }
+
+                          return errorMessage;
+                        },
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            height: 100,
+                            width: 100,
+                            margin: const EdgeInsets.only(top: 8, right: 10),
+                            child: _controller.text.isEmpty
+                                ? const Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Text('Enter a URL'),
+                                  )
+                                : FittedBox(
+                                    child: Image.network(
+                                      _controller.text,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _controller,
+                              // initialValue: _initValues['image_url'],
+                              focusNode: _imageUrlFocusNode,
+                              decoration: const InputDecoration(
+                                labelText: 'Image URL',
+                              ),
+                              keyboardType: TextInputType.url,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _saveForm,
+                              onSaved: (imageUrl) => product = Product(
+                                id: product.id,
+                                title: product.title,
+                                description: product.description,
+                                price: product.price,
+                                imageUrl: imageUrl!,
+                                isFavorite: product.isFavorite,
+                              ),
+                              validator: (imageUrl) {
+                                String? errorMessage;
+
+                                if (imageUrl == null) {
+                                  errorMessage = 'Please provide a value';
+                                } else {
+                                  if (imageUrl.isEmpty) {
+                                    errorMessage = 'Please provide a value';
+                                  }
+                                }
+
+                                return errorMessage;
+                              },
+                              onEditingComplete: () => setState(() {}),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -257,22 +264,53 @@ class _EditProductRouteState extends State<EditProductRoute> {
     }
   }
 
-  void _saveForm() {
+  Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
       final products = context.read<Products>();
+      setState(() {
+        _isLoading = true;
+      });
+
       _formKey.currentState!.save();
 
       if (purpose == RoutePurpose.addNewProduct) {
-        products.addProduct(product);
+        try {
+          await products.addProduct(product);
+        } catch (_) {
+          // ignore: prefer_void_to_null
+          await showDialog<Null>(
+            context: context,
+            builder: (error) => AlertDialog(
+              title: const Text('Something went wrong'),
+              content: Text(error.toString()),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Okay'),
+                ),
+              ],
+            ),
+          );
+        } finally {
+          setState(() {
+            _isLoading = false;
+          });
+
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            ProductsOverview.routeName,
+            (route) => false,
+          );
+        }
       } else {
         products.updateProduct(product.id, product);
-      }
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        ProductsOverview.routeName,
-        (route) => false,
-      );
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          ProductsOverview.routeName,
+          (route) => false,
+        );
+      }
     }
   }
 }

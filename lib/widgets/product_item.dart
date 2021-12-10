@@ -27,7 +27,7 @@ class ProductItem extends StatelessWidget {
         ),
         child: GridTile(
           child: Hero(
-            tag: product.imageUrl,
+            tag: product.id,
             child: Image.network(
               product.imageUrl,
               fit: BoxFit.cover,

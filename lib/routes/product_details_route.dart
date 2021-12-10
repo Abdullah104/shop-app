@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shop_app/providers/product.dart';
 
-class ProductDetailsRoute extends StatelessWidget {
+class ProductDetailsRoute extends StatefulWidget {
   static const routeName = '/product-details';
 
   const ProductDetailsRoute({
     Key? key,
   }) : super(key: key);
+
+  @override
+  State<ProductDetailsRoute> createState() => _ProductDetailsRouteState();
+}
+
+class _ProductDetailsRouteState extends State<ProductDetailsRoute> {
+  var heights = <double>[300, 600];
+  var index = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +27,20 @@ class ProductDetailsRoute extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(
-              height: 300,
-              width: double.infinity,
-              child: Hero(
-                tag: product.imageUrl,
-                child: Image.network(
-                  product.imageUrl,
-                  fit: BoxFit.cover,
+            GestureDetector(
+              onTap: () => setState(() => index = (index + 1) % heights.length),
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 400),
+                child: SizedBox(
+                  height: heights[index],
+                  width: double.infinity,
+                  child: Hero(
+                    tag: product.id,
+                    child: Image.network(
+                      product.imageUrl,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
             ),

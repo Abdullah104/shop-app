@@ -22,8 +22,12 @@ class Product with ChangeNotifier {
     notifyListeners();
   }
 
-  @override
-  String toString() {
-    return title;
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'price': price,
+        'image_url': imageUrl,
+        'is_favorite': isFavorite,
+      };
 }
