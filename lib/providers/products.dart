@@ -35,6 +35,7 @@ class Products with ChangeNotifier {
             description: value['description'],
             price: value['price'],
             imageUrl: value['image_url'],
+            isFavorite: value['is_favorite'],
           ),
         );
       }
