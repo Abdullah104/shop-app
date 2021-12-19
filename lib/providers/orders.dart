@@ -2,20 +2,29 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
-import 'package:shop_app/models/order_item.dart' as models;
-import 'package:shop_app/models/cart_item.dart';
+
+import '../models/cart_item.dart';
+import '../models/order_item.dart' as models;
 
 class Orders with ChangeNotifier {
   var _orderItems = <models.OrderItem>[];
+  final String? token;
+  final String? userId;
+
+  late final _uri = Uri.parse(
+    'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/orders/$userId.json?auth=$token',
+  );
+
+  Orders({
+    this.token,
+    this.userId,
+    List<models.OrderItem>? orderItems,
+  }) : _orderItems = orderItems ?? [];
 
   List<models.OrderItem> get orderItems => [..._orderItems];
 
   Future<void> fetchAndSetOrders() async {
-    final response = await get(
-      Uri.parse(
-        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/orders.json',
-      ),
-    );
+    final response = await get(_uri);
 
     final body = json.decode(response.body) as Map<String, dynamic>?;
     final tmp = <models.OrderItem>[];
@@ -42,23 +51,18 @@ class Orders with ChangeNotifier {
           ),
         );
       });
-
     }
 
-      _orderItems = tmp.reversed.toList();
+    _orderItems = tmp.reversed.toList();
 
-      notifyListeners();
+    notifyListeners();
   }
 
   Future<void> addOrder(List<CartItem> cartItems, double total) async {
     final timestamp = DateTime.now();
 
-    final uri = Uri.parse(
-      'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/orders.json',
-    );
-
     final response = await post(
-      uri,
+      _uri,
       body: json.encode({
         'amount': total,
         'date': timestamp.toIso8601String(),

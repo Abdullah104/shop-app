@@ -1,23 +1,38 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart';
-import 'package:shop_app/models/http_exception.dart';
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+
+import '../models/http_exception.dart';
 import 'product.dart';
 
 class Products with ChangeNotifier {
-  final _uri = Uri.parse(
-    'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products.json',
+  late final _uri = Uri.parse(
+    'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products.json?auth=$authenticationToken&orderBy="user_id"&equalTo="$userId"',
   );
 
   var _items = <Product>[];
+  final String? authenticationToken;
+  final String? userId;
+
+  Products({
+    this.authenticationToken,
+    this.userId,
+    List<Product>? items,
+  }) : _items = items ?? [];
 
   List<Product> get items => [..._items];
 
   List<Product> get favoriteItems =>
       _items.where((item) => item.isFavorite).toList();
 
-  Future<void> fetchAndSetProducts() async {
+  Future<void> fetchAndSetProducts([bool filterByUser = false]) async {
+    final filterString =
+        filterByUser ? '&orderBy="user_id"&equalTo="$userId"' : '';
+
+    final _uri = Uri.parse(
+      'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products.json?auth=$authenticationToken$filterString',
+    );
     try {
       final response = await get(_uri);
       final body = json.decode(response.body) as Map<String, dynamic>?;
@@ -26,10 +41,18 @@ class Products with ChangeNotifier {
       if (body != null) {
         final keys = body.keys.toList();
 
+        final favoritesResponse = await get(
+          Uri.parse(
+            'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/userFavorites/$userId.json?auth=$authenticationToken',
+          ),
+        );
+
+        final favoritesData = json.decode(favoritesResponse.body);
         for (var i = 0; i < keys.length; i++) {
           final key = keys[i];
+
           final value = body[key];
-          
+
           tmp.add(
             Product(
               id: key,
@@ -37,7 +60,8 @@ class Products with ChangeNotifier {
               description: value['description'],
               price: value['price'],
               imageUrl: value['image_url'],
-              isFavorite: value['is_favorite'],
+              isFavorite:
+                  favoritesData == null ? false : favoritesData[key] ?? false,
             ),
           );
         }
@@ -51,7 +75,15 @@ class Products with ChangeNotifier {
 
   Future<void> addProduct(Product product) async {
     try {
-      final response = await post(_uri, body: json.encode(product.toJson()));
+      final response = await post(
+        _uri,
+        body: json.encode(
+          {
+            ...product.toJson(),
+            'user_id': userId,
+          },
+        ),
+      );
 
       final id = (json.decode(response.body) as Map<String, dynamic>)['name']
           as String;
@@ -74,21 +106,29 @@ class Products with ChangeNotifier {
 
   Future<void> updateProduct(String id, Product product) async {
     final url =
-        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json';
+        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json?auth=$authenticationToken';
 
     final uri = Uri.parse(url);
     final index = _items.indexWhere((item) => item.id == id);
 
     _items[index] = product;
 
-    await patch(uri, body: json.encode(product.toJson()));
+    await patch(
+      uri,
+      body: json.encode(
+        {
+          ...product.toJson(),
+          'user_id': userId,
+        },
+      ),
+    );
 
     notifyListeners();
   }
 
   Future<void> removeProduct(String id) async {
     final url =
-        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json';
+        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json?auth=$authenticationToken';
 
     final uri = Uri.parse(url);
     final index = _items.indexWhere((element) => element.id == id);

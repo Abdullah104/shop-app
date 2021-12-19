@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shop_app/routes/authentication_route.dart';
+import 'package:provider/provider.dart';
+
+import '../models/http_exception.dart';
+import '../providers/auth.dart';
+import '../routes/authentication_route.dart';
 
 class AuthCard extends StatefulWidget {
   const AuthCard({Key? key}) : super(key: key);
@@ -11,7 +15,7 @@ class AuthCard extends StatefulWidget {
 class _AuthCardState extends State<AuthCard> {
   final _key = GlobalKey<FormState>();
   var _authMode = AuthenticationMode.signIn;
-  var _authData = {'email': '', 'password': ''};
+  final _authData = {'email': '', 'password': ''};
   var _isLoading = false;
   late final TextEditingController _controller;
 
@@ -80,6 +84,9 @@ class _AuthCardState extends State<AuthCard> {
                   TextFormField(
                     enabled: _authMode == AuthenticationMode.signUp,
                     obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm Password',
+                    ),
                     validator: _authMode == AuthenticationMode.signUp
                         ? (value) {
                             if (value != null) {
@@ -136,7 +143,7 @@ class _AuthCardState extends State<AuthCard> {
                     ),
                   ),
                   child: Text(
-                    '${_authMode == AuthenticationMode.signIn ? "SIGN UP" : "SIGN UP"} INSTEAD',
+                    '${_authMode == AuthenticationMode.signIn ? "SIGN UP" : "SIGN IN"} INSTEAD',
                   ),
                 ),
               ],
@@ -154,16 +161,49 @@ class _AuthCardState extends State<AuthCard> {
     _controller.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_key.currentState!.validate()) {
+      final provider = context.read<Auth>();
+
       _key.currentState!.save();
 
       setState(() {
         _isLoading = true;
       });
 
-      if (_authMode == AuthenticationMode.signIn) {
-      } else {}
+      try {
+        if (_authMode == AuthenticationMode.signIn) {
+          await provider.signIn(
+            _authData['email']!,
+            _authData['password']!,
+          );
+        } else {
+          await provider.signUp(
+            _authData['email']!,
+            _authData['password']!,
+          );
+        }
+      } on HttpException catch (error) {
+        var message = 'Authentication failed: ';
+
+        if (error.toString().contains('EMAIL_EXISTS')) {
+          message += 'The email already exists';
+        } else if (error.toString().contains('INVALID_EMAIL')) {
+          message += 'This is not a valid email';
+        } else if (error.toString().contains('WEAK_PASSWORD')) {
+          message += 'This password is too weak';
+        } else if (error.toString().contains('EMAIL_NOT_FOUND')) {
+          message += 'Could not find a user with the given email';
+        } else if (error.toString().contains('INVALID_PASSWORD')) {
+          message += 'Invalid password';
+        }
+
+        _showErrorDialog(message);
+      } catch (_) {
+        const message = 'Could not authenticate you. Please try again later.';
+
+        _showErrorDialog(message);
+      }
 
       setState(() {
         _isLoading = false;
@@ -172,12 +212,31 @@ class _AuthCardState extends State<AuthCard> {
   }
 
   void _toggleAuthMode() {
-    final authenticationModeValues = AuthenticationMode.values;
+    const authenticationModeValues = AuthenticationMode.values;
 
     setState(() {
       _authMode = authenticationModeValues[
           (authenticationModeValues.indexOf(_authMode) + 1) %
               authenticationModeValues.length];
     });
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error Occured'),
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Okay'),
+          ),
+        ],
+      ),
+    );
   }
 }

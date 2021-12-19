@@ -291,7 +291,7 @@ class _EditProductRouteState extends State<EditProductRoute> {
               ],
             ),
           );
-        } 
+        }
       } else {
         await products.updateProduct(product.id, product);
       }
