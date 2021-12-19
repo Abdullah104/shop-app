@@ -20,24 +20,27 @@ class Products with ChangeNotifier {
   Future<void> fetchAndSetProducts() async {
     try {
       final response = await get(_uri);
-      final body = json.decode(response.body) as Map<String, dynamic>;
-      final keys = body.keys.toList();
+      final body = json.decode(response.body) as Map<String, dynamic>?;
       final tmp = <Product>[];
 
-      for (var i = 0; i < keys.length; i++) {
-        final key = keys[i];
-        final value = body[key];
+      if (body != null) {
+        final keys = body.keys.toList();
 
-        tmp.add(
-          Product(
-            id: key,
-            title: value['title'],
-            description: value['description'],
-            price: value['price'],
-            imageUrl: value['image_url'],
-            isFavorite: value['is_favorite'],
-          ),
-        );
+        for (var i = 0; i < keys.length; i++) {
+          final key = keys[i];
+          final value = body[key];
+
+          tmp.add(
+            Product(
+              id: key,
+              title: value['title'],
+              description: value['description'],
+              price: value['price'],
+              imageUrl: value['image_url'],
+              isFavorite: value['is_favorite'],
+            ),
+          );
+        }
       }
 
       _items = tmp;

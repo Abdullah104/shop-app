@@ -11,18 +11,29 @@ class OrdesRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final orders = context.watch<Orders>();
+    final future = context.read<Orders>().fetchAndSetOrders();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Orders'),
       ),
       drawer: const AppDrawer(),
-      body: ListView.builder(
-        itemCount: orders.orderItems.length,
-        itemBuilder: (_, index) => OrderItem(
-          orderItem: orders.orderItems[index],
-        ),
+      body: FutureBuilder<void>(
+        future: future,
+        builder: (_, snapshot) {
+          return snapshot.connectionState == ConnectionState.done
+              ? Consumer<Orders>(
+                  builder: (_, orders, __) => ListView.builder(
+                    itemCount: orders.orderItems.length,
+                    itemBuilder: (_, index) => OrderItem(
+                      orderItem: orders.orderItems[index],
+                    ),
+                  ),
+                )
+              : const Center(
+                  child: CircularProgressIndicator.adaptive(),
+                );
+        },
       ),
     );
   }
