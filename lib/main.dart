@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app/routes/authentication_route.dart';
 
 import 'providers/cart.dart';
 import 'providers/orders.dart';
@@ -21,9 +22,13 @@ void main() {
 
 class MyApp extends StatelessWidget {
   final theme = ThemeData(
-    primarySwatch: Colors.indigo,
-    fontFamily: 'Lato',
-  );
+      primarySwatch: Colors.indigo,
+      fontFamily: 'Lato',
+      textTheme: const TextTheme(
+        headline6: TextStyle(
+          color: Colors.white,
+        ),
+      ),);
 
   MyApp({Key? key}) : super(key: key);
 
@@ -55,7 +60,9 @@ class MyApp extends StatelessWidget {
           OrdesRoute.routeName: (_) => const OrdesRoute(),
           UserProductsRoute.routeName: (_) => const UserProductsRoute(),
           EditProductRoute.routeName: (_) => const EditProductRoute(),
+          // AuthenticationRoute.routeName: (_) => const AuthenticationRoute(),
         },
+        home: const AuthenticationRoute(),
       ),
     );
   }
