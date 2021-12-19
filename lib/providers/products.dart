@@ -1,62 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:shop_app/models/http_exception.dart';
 import 'dart:convert';
 
 import 'product.dart';
 
 class Products with ChangeNotifier {
-  final _items = <Product>[
-    // Product(
-    //   id: 'p1',
-    //   title: 'Red Shirt',
-    //   description: 'A red shirt - it is pretty red!',
-    //   price: 29.99,
-    //   imageUrl:
-    //       'https://cdn.pixabay.com/photo/2016/10/02/22/17/red-t-shirt-1710578_1280.jpg',
-    //   isFavorite: false,
-    // ),
-    // Product(
-    //   id: 'p2',
-    //   title: 'Trousers',
-    //   description: 'A nice pair of trousers.',
-    //   price: 59.99,
-    //   imageUrl:
-    //       'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Trousers%2C_dress_%28AM_1960.022-8%29.jpg/512px-Trousers%2C_dress_%28AM_1960.022-8%29.jpg',
-    //   isFavorite: false,
-    // ),
-    // Product(
-    //   id: 'p3',
-    //   title: 'Yellow Scarf',
-    //   description: 'Warm and cozy - exactly what you need for the winter.',
-    //   price: 19.99,
-    //   imageUrl:
-    //       'https://live.staticflickr.com/4043/4438260868_cc79b3369d_z.jpg',
-    //   isFavorite: false,
-    // ),
-    // Product(
-    //   id: 'p4',
-    //   title: 'A Pan',
-    //   description: 'Prepare any meal you want.',
-    //   price: 49.99,
-    //   imageUrl:
-    //       'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
-    //   isFavorite: false,
-    // ),
-  ];
+  final _uri = Uri.parse(
+    'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products.json',
+  );
+
+  var _items = <Product>[];
 
   List<Product> get items => [..._items];
 
   List<Product> get favoriteItems =>
       _items.where((item) => item.isFavorite).toList();
 
+  Future<void> fetchAndSetProducts() async {
+    try {
+      final response = await get(_uri);
+      final body = json.decode(response.body) as Map<String, dynamic>?;
+      final tmp = <Product>[];
+
+      if (body != null) {
+        final keys = body.keys.toList();
+
+        for (var i = 0; i < keys.length; i++) {
+          final key = keys[i];
+          final value = body[key];
+
+          tmp.add(
+            Product(
+              id: key,
+              title: value['title'],
+              description: value['description'],
+              price: value['price'],
+              imageUrl: value['image_url'],
+              isFavorite: value['is_favorite'],
+            ),
+          );
+        }
+      }
+
+      _items = tmp;
+    } finally {
+      notifyListeners();
+    }
+  }
+
   Future<void> addProduct(Product product) async {
     try {
-      final response = await post(
-        Uri.parse(
-          'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products.json',
-        ),
-        body: json.encode(product.toJson()),
-      );
+      final response = await post(_uri, body: json.encode(product.toJson()));
+
       final id = (json.decode(response.body) as Map<String, dynamic>)['name']
           as String;
 
@@ -71,24 +67,45 @@ class Products with ChangeNotifier {
       _items.add(newProduct);
 
       notifyListeners();
-    } on Exception catch (_) {
-      
-    }
+    } on Exception catch (_) {}
   }
 
   Product findById(String id) => _items.firstWhere((item) => item.id == id);
 
-  void updateProduct(String id, Product product) {
+  Future<void> updateProduct(String id, Product product) async {
+    final url =
+        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json';
+
+    final uri = Uri.parse(url);
     final index = _items.indexWhere((item) => item.id == id);
 
     _items[index] = product;
 
+    await patch(uri, body: json.encode(product.toJson()));
+
     notifyListeners();
   }
 
-  void removeProduct(String id) {
+  Future<void> removeProduct(String id) async {
+    final url =
+        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json';
+
+    final uri = Uri.parse(url);
+    final index = _items.indexWhere((element) => element.id == id);
+    final product = _items[index];
+
     _items.removeWhere((item) => item.id == id);
 
     notifyListeners();
+
+    final response = await delete(uri);
+
+    if (response.statusCode >= 400) {
+      _items.insert(index, product);
+
+      notifyListeners();
+
+      throw HttpException('Could not delete product');
+    }
   }
 }

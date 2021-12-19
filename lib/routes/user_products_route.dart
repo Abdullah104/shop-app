@@ -8,10 +8,12 @@ import 'edit_product_route.dart';
 
 class UserProductsRoute extends StatelessWidget {
   static const routeName = '/user-products';
+
   const UserProductsRoute({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final products = context.watch<Products>();
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -29,8 +31,9 @@ class UserProductsRoute extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(8),
-        child: Consumer<Products>(
-          builder: (_, products, __) => ListView.builder(
+        child: RefreshIndicator(
+          onRefresh: () => refreshProducts(context),
+          child: ListView.builder( 
             itemCount: products.items.length,
             itemBuilder: (_, index) => Column(
               children: [
@@ -44,5 +47,9 @@ class UserProductsRoute extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> refreshProducts(BuildContext context) async {
+    await context.read<Products>().fetchAndSetProducts();
   }
 }

@@ -47,15 +47,7 @@ class CartRoute extends StatelessWidget {
                     ),
                     backgroundColor: theme.primaryColor,
                   ),
-                  TextButton(
-                    onPressed: () {
-                      context.read<Orders>().addOrder(
-                          cart.items.values.toList(), cart.totalAmount);
-
-                      cart.clearCart();
-                    },
-                    child: const Text('ORDER NOW'),
-                  )
+                  OrderButton(cart: cart)
                 ],
               ),
             ),
@@ -75,5 +67,49 @@ class CartRoute extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class OrderButton extends StatefulWidget {
+  const OrderButton({
+    Key? key,
+    required this.cart,
+  }) : super(key: key);
+
+  final Cart cart;
+
+  @override
+  State<OrderButton> createState() => _OrderButtonState();
+}
+
+class _OrderButtonState extends State<OrderButton> {
+  var _loading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: widget.cart.totalAmount <= 0 || _loading ? null : order,
+      child: _loading
+          ? const Center(
+              child: CircularProgressIndicator.adaptive(),
+            )
+          : const Text('ORDER NOW'),
+    );
+  }
+
+  Future<void> order() async {
+    setState(() {
+      _loading = true;
+    });
+
+    await context
+        .read<Orders>()
+        .addOrder(widget.cart.items.values.toList(), widget.cart.totalAmount);
+
+    setState(() {
+      _loading = false;
+    });
+
+    widget.cart.clearCart();
   }
 }

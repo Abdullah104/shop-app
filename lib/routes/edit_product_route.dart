@@ -291,26 +291,15 @@ class _EditProductRouteState extends State<EditProductRoute> {
               ],
             ),
           );
-        } finally {
-          setState(() {
-            _isLoading = false;
-          });
-
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            ProductsOverview.routeName,
-            (route) => false,
-          );
-        }
+        } 
       } else {
-        products.updateProduct(product.id, product);
-
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          ProductsOverview.routeName,
-          (route) => false,
-        );
+        await products.updateProduct(product.id, product);
       }
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        ProductsOverview.routeName,
+        (route) => false,
+      );
     }
   }
 }

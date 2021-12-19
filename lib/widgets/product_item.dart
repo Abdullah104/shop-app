@@ -41,7 +41,13 @@ class ProductItem extends StatelessWidget {
                   product.isFavorite ? Icons.favorite : Icons.favorite_border,
                 ),
                 color: theme.colorScheme.secondary,
-                onPressed: () => product.toggleFavoriteStatus(),
+                onPressed: () => product.toggleFavoriteStatus().catchError(
+                  (error) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(error.toString())),
+                    );
+                  },
+                ),
               ),
             ),
             title: Text(
