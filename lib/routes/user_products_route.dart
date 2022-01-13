@@ -13,7 +13,6 @@ class UserProductsRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final products = context.watch<Products>();
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -29,27 +28,37 @@ class UserProductsRoute extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8),
-        child: RefreshIndicator(
-          onRefresh: () => refreshProducts(context),
-          child: ListView.builder( 
-            itemCount: products.items.length,
-            itemBuilder: (_, index) => Column(
-              children: [
-                UserProductItem(
-                  product: products.items[index],
-                ),
-                const Divider(),
-              ],
-            ),
-          ),
-        ),
+      body: FutureBuilder<void>(
+        future: refreshProducts(context),
+        builder: (context, snapshot) =>
+            snapshot.connectionState == ConnectionState.done
+                ? RefreshIndicator(
+                    onRefresh: () => refreshProducts(context),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Consumer<Products>(
+                        builder: (_, products, __) => ListView.builder(
+                          itemCount: products.items.length,
+                          itemBuilder: (_, index) => Column(
+                            children: [
+                              UserProductItem(
+                                product: products.items[index],
+                              ),
+                              const Divider(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : const Center(
+                    child: CircularProgressIndicator.adaptive(),
+                  ),
       ),
     );
   }
 
   Future<void> refreshProducts(BuildContext context) async {
-    await context.read<Products>().fetchAndSetProducts();
+    await context.read<Products>().fetchAndSetProducts(true);
   }
 }

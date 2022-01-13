@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
-import 'package:shop_app/models/http_exception.dart';
+
+import '../models/http_exception.dart';
 
 class Product with ChangeNotifier {
   final String id;
@@ -30,17 +31,17 @@ class Product with ChangeNotifier {
         isFavorite: json['is_favorite'],
       );
 
-  Future<void> toggleFavoriteStatus() async {
+  Future<void> toggleFavoriteStatus(String token, String userId) async {
     final newStatus = !isFavorite;
 
     isFavorite = !isFavorite;
     notifyListeners();
 
-    final response = await patch(
+    final response = await put(
       Uri.parse(
-        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json',
+        'https://shop-app-e0796-default-rtdb.europe-west1.firebasedatabase.app/userFavorites/$userId/$id.json?auth=$token',
       ),
-      body: json.encode({'is_favorite': newStatus}),
+      body: json.encode(newStatus),
     );
 
     if (response.statusCode >= 400) {
@@ -57,6 +58,5 @@ class Product with ChangeNotifier {
         'description': description,
         'price': price,
         'image_url': imageUrl,
-        'is_favorite': isFavorite,
       };
 }

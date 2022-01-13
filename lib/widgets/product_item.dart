@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/auth.dart';
 import '../providers/cart.dart';
 import '../providers/product.dart';
 import '../routes/product_details_route.dart';
@@ -36,19 +37,25 @@ class ProductItem extends StatelessWidget {
           footer: GridTileBar(
             backgroundColor: Colors.black87,
             leading: Consumer<Product>(
-              builder: (_, product, __) => IconButton(
-                icon: Icon(
-                  product.isFavorite ? Icons.favorite : Icons.favorite_border,
-                ),
-                color: theme.colorScheme.secondary,
-                onPressed: () => product.toggleFavoriteStatus().catchError(
-                  (error) {
-                    messenger.showSnackBar(
-                      SnackBar(content: Text(error.toString())),
-                    );
-                  },
-                ),
-              ),
+              builder: (_, product, __) {
+                final auth = context.read<Auth>();
+
+                return IconButton(
+                  icon: Icon(
+                    product.isFavorite ? Icons.favorite : Icons.favorite_border,
+                  ),
+                  color: theme.colorScheme.secondary,
+                  onPressed: () => product
+                      .toggleFavoriteStatus(auth.token!, auth.userId!)
+                      .catchError(
+                    (error) {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(error.toString())),
+                      );
+                    },
+                  ),
+                );
+              },
             ),
             title: Text(
               product.title,

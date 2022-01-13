@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/auth.dart';
 import '../routes/orders_route.dart';
 import '../routes/user_products_route.dart';
 
@@ -39,6 +41,11 @@ class AppDrawer extends StatelessWidget {
               UserProductsRoute.routeName,
             ),
           ),
+          const Divider(),
+          ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Log Out'),
+              onTap: context.read<Auth>().signOut),
         ],
       ),
     );
