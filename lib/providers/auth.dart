@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart';
 
 import '../models/http_exception.dart';
@@ -53,6 +54,9 @@ class Auth with ChangeNotifier {
     if (data['error'] != null) {
       throw HttpException(data['error']['message']);
     } else {
+      final sharedPreferences = await SharedPreferences.getInstance();
+      late final String userData;
+
       _token = data['idToken'];
       _userId = data['localId'];
       _expiryDate = DateTime.now().add(
@@ -63,8 +67,16 @@ class Auth with ChangeNotifier {
         ),
       );
 
-      notifyListeners();
+      userData = json.encode({
+        'token': _token,
+        'user_id': _userId,
+        'expiry_date': _expiryDate!.toIso8601String(),
+      });
+
       _automaticallySignOut();
+      notifyListeners();
+
+      sharedPreferences.setString('user_data', userData);
     }
   }
 
@@ -80,6 +92,9 @@ class Auth with ChangeNotifier {
     }
 
     notifyListeners();
+
+    SharedPreferences.getInstance()
+        .then((sharedPreferences) => sharedPreferences.clear()); 
   }
 
   void _automaticallySignOut() {
@@ -90,5 +105,37 @@ class Auth with ChangeNotifier {
     final timeToExpiry = _expiryDate!.difference(DateTime.now());
 
     _authTimer = Timer(Duration(seconds: timeToExpiry.inSeconds), signOut);
+  }
+
+  Future<bool> tryAutoLogin() async {
+    late final bool autoLoginAttemptResult;
+    final sharedPreferences = await SharedPreferences.getInstance();
+
+    if (!sharedPreferences.containsKey('user_data')) {
+      autoLoginAttemptResult = false;
+    } else {
+      final extractedUserData = json.decode(
+        sharedPreferences.getString('user_data')!,
+      ) as Map<String, dynamic>;
+
+      final expirationDate = DateTime.parse(extractedUserData['expiry_date']);
+      final token = extractedUserData['token'];
+      final userId = extractedUserData['user_id'];
+
+      if (expirationDate.isAfter(DateTime.now())) {
+        _token = token;
+        _userId = userId;
+        _expiryDate = expirationDate;
+
+        notifyListeners();
+        _automaticallySignOut();
+
+        autoLoginAttemptResult = true;
+      } else {
+        autoLoginAttemptResult = false;
+      }
+    }
+
+    return autoLoginAttemptResult;
   }
 }

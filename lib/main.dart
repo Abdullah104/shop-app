@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app/routes/splash_screen.dart';
 
 import 'providers/auth.dart';
 import 'providers/cart.dart';
@@ -81,7 +82,14 @@ class MyApp extends StatelessWidget {
             },
             home: auth.isAuthenticated
                 ? const ProductsOverview()
-                : const AuthenticationRoute(),
+                : FutureBuilder<bool>(
+                    future: auth.tryAutoLogin(),
+                    builder: (_, snapshot) =>
+                        snapshot.connectionState == ConnectionState.waiting
+                            ? const SplashScreen()
+                            : const AuthenticationRoute(),
+                  ),
+            // : const AuthenticationRoute(),
           );
         },
       ),
