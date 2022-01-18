@@ -12,18 +12,49 @@ class AuthCard extends StatefulWidget {
   State<AuthCard> createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>
+    with SingleTickerProviderStateMixin {
   final _key = GlobalKey<FormState>();
   var _authMode = AuthenticationMode.signIn;
   final _authData = {'email': '', 'password': ''};
   var _isLoading = false;
   late final TextEditingController _controller;
+  late final AnimationController _animationController;
+  late final Animation<double> _opacityAnimation;
+  late final Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
 
     _controller = TextEditingController();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 300,
+      ),
+    );
+
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1.5),
+      end: const Offset(0, 0),
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
   }
 
   @override
@@ -35,13 +66,12 @@ class _AuthCardState extends State<AuthCard> {
         borderRadius: BorderRadius.circular(10),
       ),
       elevation: 8,
-      child: Container(
-        height: _authMode == AuthenticationMode.signUp ? 320 : 260,
+      child: AnimatedContainer(
+        height: _authMode == AuthenticationMode.signIn ? 260 : 320,
         width: MediaQuery.of(context).size.width * 0.75,
-        constraints: BoxConstraints(
-          minHeight: _authMode == AuthenticationMode.signUp ? 320 : 260,
-        ),
+        duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(16),
+        curve: Curves.easeIn,
         child: Form(
           key: _key,
           child: SingleChildScrollView(
@@ -80,27 +110,41 @@ class _AuthCardState extends State<AuthCard> {
                     _authData['password'] = value!;
                   },
                 ),
-                if (_authMode == AuthenticationMode.signUp)
-                  TextFormField(
-                    enabled: _authMode == AuthenticationMode.signUp,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm Password',
-                    ),
-                    validator: _authMode == AuthenticationMode.signUp
-                        ? (value) {
-                            if (value != null) {
-                              if (value == _controller.text) {
-                                return null;
-                              } else {
-                                return 'Passwords do not match';
-                              }
-                            } else {
-                              return 'You must confirm your password';
-                            }
-                          }
-                        : null,
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  constraints: BoxConstraints(
+                    minHeight: _authMode == AuthenticationMode.signUp ? 60 : 0,
+                    maxHeight: _authMode == AuthenticationMode.signUp ? 120 : 0,
                   ),
+                  curve: Curves.easeIn,
+                  
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: TextFormField(
+                        enabled: _authMode == AuthenticationMode.signUp,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Confirm Password',
+                        ),
+                        validator: _authMode == AuthenticationMode.signUp
+                            ? (value) {
+                                if (value != null) {
+                                  if (value == _controller.text) {
+                                    return null;
+                                  } else {
+                                    return 'Passwords do not match';
+                                  }
+                                } else {
+                                  return 'You must confirm your password';
+                                }
+                              }
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(
                   height: 20,
                 ),
@@ -159,6 +203,7 @@ class _AuthCardState extends State<AuthCard> {
     super.dispose();
 
     _controller.dispose();
+    _animationController.dispose();
   }
 
   Future<void> _submit() async {
@@ -212,12 +257,16 @@ class _AuthCardState extends State<AuthCard> {
   }
 
   void _toggleAuthMode() {
-    const authenticationModeValues = AuthenticationMode.values;
-
     setState(() {
-      _authMode = authenticationModeValues[
-          (authenticationModeValues.indexOf(_authMode) + 1) %
-              authenticationModeValues.length];
+      if (_authMode == AuthenticationMode.signIn) {
+        _authMode = AuthenticationMode.signUp;
+
+        _animationController.forward();
+      } else {
+        _authMode = AuthenticationMode.signIn;
+
+        _animationController.reverse();
+      }
     });
   }
 

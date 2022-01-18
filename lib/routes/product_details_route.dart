@@ -21,53 +21,52 @@ class _ProductDetailsRouteState extends State<ProductDetailsRoute> {
     final product = ModalRoute.of(context)!.settings.arguments as Product;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(product.title),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: () => setState(() => index = (index + 1) % heights.length),
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 400),
-                child: SizedBox(
-                  height: heights[index],
-                  width: double.infinity,
-                  child: Hero(
-                    tag: product.id,
-                    child: Image.network(
-                      product.imageUrl,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 300,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(product.title),
+              background: Hero(
+                tag: product.id,
+                child: Image.network(
+                  product.imageUrl,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
-            const SizedBox(
-              height: 16,
+          ),
+          SliverList( 
+            delegate: SliverChildListDelegate(
+              [
+                const SizedBox(
+                  height: 16,
+                ),
+                Text(
+                  '${product.price} SAR',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 20,
+                  ),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  width: double.infinity,
+                  child: Text(
+                    product.description,
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              '${product.price} SAR',
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(
-              height: 16,
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              width: double.infinity,
-              child: Text(
-                product.description,
-                textAlign: TextAlign.center,
-                softWrap: true,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

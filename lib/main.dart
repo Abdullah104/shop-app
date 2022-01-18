@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app/helpers/custom_page_transition_builder.dart';
 import 'package:shop_app/routes/splash_screen.dart';
 
 import 'providers/auth.dart';
@@ -30,6 +31,12 @@ class MyApp extends StatelessWidget {
       headline6: TextStyle(
         color: Colors.white,
       ),
+    ),
+    pageTransitionsTheme: PageTransitionsTheme(
+      builders: {
+        
+        TargetPlatform.iOS: CustomPageTransitionBuilder(),
+      },
     ),
   );
 
